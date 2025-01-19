@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+.env
+venv/
+env
+
+# React
+node_modules/
+.env.local
+build/
+dist/
+
+# IDE
+.vscode/
+.idea/
+
+# Database
+*.sqlite3
+
+# Media
+media/
