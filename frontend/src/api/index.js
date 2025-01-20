@@ -1,7 +1,10 @@
 import axios from 'axios';
 
+const BACKEND_URL = import.meta.env.VITE_API_URL || 'https://ecommerce-backend-nhrc.onrender.com/api';
+const MEDIA_URL = import.meta.env.VITE_MEDIA_URL || 'https://ecommerce-backend-nhrc.onrender.com';
+
 const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL || 'https://ecommerce-backend-nhrc.onrender.com/api',
+    baseURL: BACKEND_URL,
     headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -9,47 +12,28 @@ const api = axios.create({
     withCredentials: false
 });
 
-// Debug request interceptor
-api.interceptors.request.use(
-    config => {
-        console.log('Request:', {
-            url: config.url,
-            method: config.method,
-            headers: config.headers,
-            data: config.data
-        });
-        return config;
-    },
-    error => {
-        console.error('Request Error:', error);
-        return Promise.reject(error);
-    }
-);
-
-// Debug response interceptor
+// Add a request interceptor to modify image URLs if needed
+// In your API interceptor
 api.interceptors.response.use(
     response => {
-        console.log('Response:', {
-            status: response.status,
-            data: response.data,
-            headers: response.headers
-        });
+        // Modify image URLs to be absolute if they're relative
+        const processResponse = (data) => {
+            if (typeof data === 'object' && data !== null) {
+                Object.keys(data).forEach(key => {
+                    if (key === 'image_url' && data[key] && !data[key].startsWith('http')) {
+                        data[key] = `https://ecommerce-backend-nhrc.onrender.com${data[key].startsWith('/') ? data[key] : '/' + data[key]}`;
+                    } else if (typeof data[key] === 'object') {
+                        processResponse(data[key]);
+                    }
+                });
+            }
+            return data;
+        };
+
+        response.data = processResponse(response.data);
         return response;
     },
-    error => {
-        if (error.response) {
-            console.error('Response Error:', {
-                status: error.response.status,
-                data: error.response.data,
-                headers: error.response.headers
-            });
-        } else if (error.request) {
-            console.error('Request Error:', error.request);
-        } else {
-            console.error('Error:', error.message);
-        }
-        return Promise.reject(error);
-    }
+    error => Promise.reject(error)
 );
 
 export default api;
