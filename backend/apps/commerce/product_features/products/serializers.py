@@ -82,7 +82,7 @@ class ProductSerializer(serializers.ModelSerializer):
             if obj.image:
                 request = self.context.get('request')
                 # Generate full URL including domain
-                return request.build_absolute_uri(obj.image.url) if request else None
+                return self.context['request'].build_absolute_uri(obj.image.url)
             return None
         except Exception as e:
             print(f"Error getting image URL for product {obj.id}: {e}")

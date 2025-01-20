@@ -1,91 +1,97 @@
-// Import necessary dependencies from React and custom modules
 import React, { useState, useEffect } from 'react';
-import { productAPI } from '../../api/products';  // Custom API service for products
-import ProductCard from './ProductCard';  // Child component for displaying individual products
+import { productAPI } from '../../api/products';
+import ProductCard from '../../pages/categories/components/ProductCard';
+import { Link } from 'react-router-dom';
 
 const FeaturedProducts = () => {
-    // State management using hooks
-    const [products, setProducts] = useState([]); // Stores the list of products
-    const [isLoading, setIsLoading] = useState(true); // Tracks loading state
-    const [error, setError] = useState(null); // Stores any error messages
-    const [productImageIndices, setProductImageIndices] = useState({}); // Tracks current image index for each product
+    const [featuredProducts, setFeaturedProducts] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [productImageIndices, setProductImageIndices] = useState({});
 
-    // Async function to fetch featured products from the API
-    const fetchFeaturedProducts = async () => {
-        try {
-            setIsLoading(true); // Set loading state before API call
-            const response = await productAPI.getFeaturedProducts();
-            
-            // Check if response contains valid data
-            if (response?.data?.results) {
-                // Process each product, ensuring it has an image_url
-                const processedProducts = response.data.results.map(product => ({
-                    ...product,
-                    // Use provided image_url or fallback to default image
-                    image_url: product.image_url || "/path/to/default/image.png"
-                }));
-                setProducts(processedProducts);
-            } else {
-                throw new Error('Unable to parse product data');
-            }
-        } catch (error) {
-            console.error('Error fetching featured products:', error);
-            setError(error.message);
-        } finally {
-            setIsLoading(false); // Reset loading state regardless of outcome
-        }
-    };
+    // Default fallback image (ensure this path is correct)
+    const DEFAULT_IMAGE = '/assets/default-product.png';
 
-    // Effect hook to fetch products when component mounts
     useEffect(() => {
-        fetchFeaturedProducts();
-    }, []); // Empty dependency array means this runs once on mount
+        const fetchFeaturedProducts = async () => {
+            try {
+                setIsLoading(true);
+                const response = await productAPI.getFeaturedProducts();
+                
+                // More robust data extraction
+                const productsData = response?.data?.data?.results 
+                    || response?.data?.results 
+                    || response?.data 
+                    || [];
 
-    // Conditional rendering based on component state
-    // Show loading state
+                const processedProducts = productsData.map(product => ({
+                    ...product,
+                    // Enhanced image URL handling
+                    image_url: product.image?.url 
+                        || product.image 
+                        || product.image_url 
+                        || DEFAULT_IMAGE,
+                    // Fallback for missing name
+                    name: product.name || 'Unnamed Product'
+                }));
+
+                // Log for debugging
+                console.log('Processed Featured Products:', processedProducts);
+
+                setFeaturedProducts(processedProducts);
+            } catch (error) {
+                console.error('Error fetching featured products:', error);
+                setError('Failed to load featured products');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        
+        fetchFeaturedProducts();
+    }, []);
+
+    // Loading state
     if (isLoading) {
         return (
-            <div className="flex justify-center items-center min-h-[200px]">
-                <p>Loading featured products...</p>
+            <div className="relative bg-gray-900 flex justify-center items-center h-96">
+                <p className="text-white">Loading featured products...</p>
             </div>
         );
     }
-
-    // Show error state
+    
+    // Error state
     if (error) {
         return (
-            <div className="flex justify-center items-center min-h-[200px]">
+            <div className="relative bg-gray-900 flex justify-center items-center h-96">
                 <p className="text-red-500">{error}</p>
             </div>
         );
     }
 
-    // Show empty state when no products are available
-    if (products.length === 0) {
-        return (
-            <div className="flex justify-center items-center min-h-[200px]">
-                <p>No featured products available.</p>
-            </div>
-        );
-    }
-
-    // Main render: Display products grid
     return (
-        <section className="py-12 bg-gray-50">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <h2 className="text-3xl font-bold text-gray-900 text-center mb-8">
-                    Featured Products
-                </h2>
-                {/* Responsive grid layout */}
-                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                    {/* Map through products array to render ProductCard components */}
-                    {products.map((product) => (
+        <div className="relative bg-gray-900">
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 opacity-75" />
+            
+            <div className="relative max-w-7xl mx-auto py-24 px-4 sm:py-32 sm:px-6 lg:px-8">
+                <div className="text-center mb-16">
+                    <h2 className="text-3xl font-bold text-white sm:text-4xl">
+                        Featured Products
+                    </h2>
+                    <p className="mt-4 text-lg text-gray-300">
+                        Discover our most popular and trending items
+                    </p>
+                </div>
+    
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                    {featuredProducts.map((product) => (
                         <ProductCard
                             key={product.id}
-                            product={product}
-                            // Track current image index for product galleries
+                            product={{
+                                ...product,
+                                // Explicitly set image URL with fallback
+                                image_url: product.image_url || DEFAULT_IMAGE
+                            }}
                             currentImageIndex={productImageIndices[product.id] || 0}
-                            // Callback to update image index for product galleries
                             onUpdateImageIndex={(newIndex) => {
                                 setProductImageIndices(prev => ({
                                     ...prev,
@@ -95,8 +101,17 @@ const FeaturedProducts = () => {
                         />
                     ))}
                 </div>
+    
+                <div className="mt-12 text-center">
+                    <Link 
+                        to="/shop" 
+                        className="bg-white text-gray-900 px-8 py-3 rounded-md font-medium hover:bg-gray-100 transition-all transform hover:scale-105 inline-block"
+                    >
+                        View All Products
+                    </Link>
+                </div>
             </div>
-        </section>
+        </div>
     );
 };
 
