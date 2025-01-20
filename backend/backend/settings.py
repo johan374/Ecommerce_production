@@ -159,22 +159,15 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'backend.wsgi.application'
 
+import dj_database_url
+
 # Database configuration using environment variables
 DATABASES = {
-    'default': {
-        # Specify PostgreSQL as the database engine
-        'ENGINE': 'django.db.backends.postgresql',
-        # Get database name from .env, fallback to 'my_db' if not found
-        'NAME': os.getenv('DB_NAME', 'my_db'),       
-        # Get database user from .env
-        'USER': os.getenv('DB_USER'),    
-        # Get database password from .env
-        'PASSWORD': os.getenv('DB_PASSWORD'), 
-        # Get host from .env (localhost for local development)
-        'HOST': os.getenv('DB_HOST'),
-        # Get port from .env (default PostgreSQL port is 5432)
-        'PORT': os.getenv('DB_PORT'),
-    }
+    'default': dj_database_url.config(
+        default=os.getenv('DATABASE_URL'),
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
 }
 
 # Add security settings
