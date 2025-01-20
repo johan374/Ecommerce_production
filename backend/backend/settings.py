@@ -1,6 +1,8 @@
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+from django.conf.urls.static import serve
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -31,25 +33,16 @@ CORS_ALLOWED_ORIGINS = [
     'https://ecommerce-production-dc7d.onrender.com',  # Replace with your frontend domain
 ]
 
-# At the top with other imports
-from django.conf.urls.static import serve
+# Media and Static Files Settings
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_DIRS = []
 
-# Media files configuration
+# Media settings
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
-
-# For serving media files in production
-MEDIA_URL_PATH = '/media/'
-DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
-
-# Media and File Storage Settings
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
-
-# Make sure media files are served in production
-MEDIA_URL_PATH = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'  # Using pathlib is preferred
 SERVE_MEDIA_FILES = True
+DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
 
 
 # Add Ngrok URL to trusted origins for CSRF protection
@@ -77,7 +70,6 @@ CORS_ALLOW_HEADERS = [
     'user-agent',
     'x-csrftoken',
     'x-requested-with',
-    'ngrok-skip-browser-warning',  # Add this line
 ]
 
 
@@ -123,6 +115,11 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+# Whitenoise settings
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+WHITENOISE_USE_FINDERS = True
+WHITENOISE_MANIFEST_STRICT = False
+WHITENOISE_ALLOW_ALL_ORIGINS = True
 
 
 ROOT_URLCONF = 'backend.urls'
@@ -144,8 +141,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'backend.wsgi.application'
-
-import dj_database_url
 
 # Database configuration using environment variables
 DATABASES = {
