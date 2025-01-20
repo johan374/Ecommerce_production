@@ -4,7 +4,7 @@ const BACKEND_URL = import.meta.env.VITE_API_URL || 'https://ecommerce-backend-n
 const MEDIA_URL = import.meta.env.VITE_MEDIA_URL || 'https://ecommerce-backend-nhrc.onrender.com';
 
 const api = axios.create({
-    baseURL: BACKEND_URL,
+    baseURL: import.meta.env.VITE_API_URL || 'https://ecommerce-backend-nhrc.onrender.com/api',
     headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -12,25 +12,32 @@ const api = axios.create({
     withCredentials: false
 });
 
-// Add a request interceptor to modify image URLs if needed
-// In your API interceptor
+// Add an interceptor to handle image URLs
 api.interceptors.response.use(
     response => {
-        // Modify image URLs to be absolute if they're relative
-        const processResponse = (data) => {
+        // Modify image URLs to be absolute
+        const processImageUrls = (data) => {
             if (typeof data === 'object' && data !== null) {
                 Object.keys(data).forEach(key => {
-                    if (key === 'image_url' && data[key] && !data[key].startsWith('http')) {
-                        data[key] = `https://ecommerce-backend-nhrc.onrender.com${data[key].startsWith('/') ? data[key] : '/' + data[key]}`;
+                    // Handle image_url and additional_images
+                    if (key === 'image_url' || key === 'additional_images') {
+                        if (Array.isArray(data[key])) {
+                            data[key] = data[key].map(img => 
+                                img.startsWith('http') ? img : 
+                                `https://ecommerce-backend-nhrc.onrender.com${img.startsWith('/') ? img : '/' + img}`
+                            );
+                        } else if (typeof data[key] === 'string' && !data[key].startsWith('http')) {
+                            data[key] = `https://ecommerce-backend-nhrc.onrender.com${data[key].startsWith('/') ? data[key] : '/' + data[key]}`;
+                        }
                     } else if (typeof data[key] === 'object') {
-                        processResponse(data[key]);
+                        processImageUrls(data[key]);
                     }
                 });
             }
             return data;
         };
 
-        response.data = processResponse(response.data);
+        response.data = processImageUrls(response.data);
         return response;
     },
     error => Promise.reject(error)
