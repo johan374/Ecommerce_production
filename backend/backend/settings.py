@@ -22,12 +22,12 @@ ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
     '.render.com',  # Allows all render.com subdomains
-    'your-app-name.onrender.com',  # Replace with your actual render domain
+    'ecommerce-backend-nhrc.onrender.com',  # Add your actual backend domain
 ]
 
 # Update CORS settings for production
 CORS_ALLOWED_ORIGINS = [
-    'https://your-frontend-domain.com',  # Replace with your frontend domain
+    'https://ecommerce-production-dc7d.onrender.com',  # Replace with your frontend domain
 ]
 
 # Media and Static Files settings for local development

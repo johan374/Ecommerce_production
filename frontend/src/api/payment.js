@@ -1,12 +1,11 @@
 import axios from 'axios';
 
-// Create a separate Axios instance for payments with Ngrok URL
+// Create a separate Axios instance for payments with Render URL
 const paymentApi = axios.create({
-    baseURL: `https://${import.meta.env.VITE_NGROK_URL}`, // Use environment variable
+    baseURL: import.meta.env.VITE_API_URL.replace('/api', ''), // Remove '/api' since it's included in the routes
     headers: {
         'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'ngrok-skip-browser-warning': 'true'
+        'Content-Type': 'application/json'
     }
 });
 
