@@ -18,35 +18,43 @@ const FeaturedProducts = () => {
                 setIsLoading(true);
                 const response = await productAPI.getFeaturedProducts();
                 
+                console.log('Full Response:', response);
+                console.log('Response Data:', response.data);
+                
                 // More robust data extraction
-                const productsData = response?.data?.data?.results 
-                    || response?.data?.results 
-                    || response?.data 
-                    || [];
-
-                const processedProducts = productsData.map(product => ({
-                    ...product,
-                    // Enhanced image URL handling
-                    image_url: product.image?.url 
-                        || product.image 
-                        || product.image_url 
-                        || DEFAULT_IMAGE,
-                    // Fallback for missing name
-                    name: product.name || 'Unnamed Product'
-                }));
-
-                // Log for debugging
-                console.log('Processed Featured Products:', processedProducts);
-
-                setFeaturedProducts(processedProducts);
+                const productsData = 
+                    response.data?.data?.results || 
+                    response.data?.results || 
+                    response.data || 
+                    [];
+    
+                console.log('Extracted Products:', productsData);
+                
+                if (Array.isArray(productsData)) {
+                    const processedProducts = productsData.map(product => ({
+                        ...product,
+                        image_url: product.image_url || "/default-product.png"
+                    }));
+                    
+                    console.log('Processed Products:', processedProducts);
+                    
+                    setFeaturedProducts(processedProducts);
+                } else {
+                    console.error('Invalid products data structure');
+                    setError('Invalid products data');
+                }
             } catch (error) {
-                console.error('Error fetching featured products:', error);
-                setError('Failed to load featured products');
+                console.error('Detailed Error:', {
+                    message: error.message,
+                    response: error.response,
+                    data: error.response?.data
+                });
+                setError(error.message || 'Failed to load featured products');
             } finally {
                 setIsLoading(false);
             }
         };
-        
+    
         fetchFeaturedProducts();
     }, []);
 

@@ -4,10 +4,17 @@ export const productAPI = {
     getFeaturedProducts: async () => {
         try {
             const response = await api.get('/products/featured/');
-            console.log('Full Featured Products Response:', response);
+            
+            console.log('Raw Featured Products Response:', response);
+            console.log('Response Data:', response.data);
+            
             return response;
         } catch (error) {
-            console.error('Error fetching featured products:', error);
+            console.error('Detailed Featured Products Error:', {
+                status: error.response?.status,
+                data: error.response?.data,
+                message: error.message
+            });
             throw error;
         }
     },
