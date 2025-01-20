@@ -31,48 +31,32 @@ CORS_ALLOWED_ORIGINS = [
     'https://ecommerce-production-dc7d.onrender.com',  # Replace with your frontend domain
 ]
 
-# Media and Static Files settings for local development
-STATIC_URL = 'static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_DIRS = []
+# At the top with other imports
+from django.conf.urls.static import serve
 
+# Media files configuration
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# Get NGROK_URL
-NGROK_URL = os.getenv('NGROK_URL')
+# For serving media files in production
+MEDIA_URL_PATH = '/media/'
+DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
 
-# Special Ngrok configuration only if Ngrok is needed for payments
-# Conditionally add Ngrok URL if it exists
-if NGROK_URL:
-    ALLOWED_HOSTS.extend([
-        NGROK_URL,
-        f'www.{NGROK_URL}',  # Optional: sometimes useful to include www variant
-        f'https://{NGROK_URL}',
-        f'http://{NGROK_URL}'
-    ])
+# Media and File Storage Settings
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
 
-# Update CORS settings similarly
-CORS_ALLOWED_ORIGINS = [
-    'http://localhost:5173',
-]
+# Make sure media files are served in production
+MEDIA_URL_PATH = '/media/'
+SERVE_MEDIA_FILES = True
 
-if NGROK_URL:
-    CORS_ALLOWED_ORIGINS.extend([
-        f'https://{NGROK_URL}',
-        f'http://{NGROK_URL}'
-    ])
 
 # Add Ngrok URL to trusted origins for CSRF protection
 CSRF_TRUSTED_ORIGINS = [
-    'http://localhost:5173'
+    'http://localhost:5173',
+    'https://ecommerce-production-dc7d.onrender.com',
 ]
-
-if NGROK_URL:
-    CSRF_TRUSTED_ORIGINS.extend([
-        f'https://{NGROK_URL}',
-        f'http://{NGROK_URL}'
-    ])
     
 CORS_ALLOW_METHODS = [
     'DELETE',
@@ -129,10 +113,10 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # This should be second
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # Add this line
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
