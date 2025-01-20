@@ -27,6 +27,7 @@ ALLOWED_HOSTS = [
 
 # Update CORS settings for production
 CORS_ALLOWED_ORIGINS = [
+    'http://localhost:5173',
     'https://ecommerce-production-dc7d.onrender.com',  # Replace with your frontend domain
 ]
 
@@ -131,6 +132,7 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # Add this line
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
