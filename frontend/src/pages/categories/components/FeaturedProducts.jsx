@@ -17,41 +17,15 @@ const FeaturedProducts = () => {
             try {
                 setIsLoading(true);
                 const response = await productAPI.getFeaturedProducts();
-                
-                console.log('Full Response:', response);
-                console.log('Response Data:', response.data);
-                
-                // More robust data extraction
-                const productsData = 
-                    response.data?.data?.results || 
-                    response.data?.results || 
-                    response.data || 
-                    [];
-    
-                console.log('Extracted Products:', productsData);
-                
-                if (Array.isArray(productsData)) {
-                    const processedProducts = productsData.map(product => ({
-                        ...product,
-                        image_url: product.image_url || "/default-product.png"
-                    }));
-                    
-                    console.log('Processed Products:', processedProducts);
-                    
-                    setFeaturedProducts(processedProducts);
-                } else {
-                    console.error('Invalid products data structure');
-                    setError('Invalid products data');
-                }
+                const productsData = response.data.data?.results || response.data.results || response.data;
             } catch (error) {
-                console.error('Detailed Error:', {
+                console.error('Detailed error:', {
                     message: error.message,
-                    response: error.response,
-                    data: error.response?.data
+                    response: error.response?.data,
+                    status: error.response?.status,
+                    stack: error.stack
                 });
-                setError(error.message || 'Failed to load featured products');
-            } finally {
-                setIsLoading(false);
+                setError(`Failed to load featured products: ${error.message}`);
             }
         };
     
