@@ -4,9 +4,38 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.views.static import serve
 from django.urls import re_path
+from django.http import JsonResponse
+
+# Create a view to show available endpoints
+def api_root(request):
+    return JsonResponse({
+        'endpoints': {
+            'products': {
+                'featured': '/api/products/featured/',
+                'list': '/api/products/',
+                'search': '/api/products/search/',
+                'by_category': '/api/products/category/<category>/',
+                'detail': '/api/products/<id>/'
+            },
+            'subcategories': {
+                'list': '/api/subcategories/',
+                'by_category': '/api/subcategories/<category>/',
+                'detail': '/api/subcategories/detail/<slug>/'
+            },
+            'newsletter': {
+                'subscribe': '/api/newsletter/subscribe/'
+            },
+            'payments': {
+                'create_order': '/api/orders/create/',
+                'process': '/api/process/',
+                'webhook': '/api/webhook/'
+            }
+        }
+    })
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/', api_root),  # Add this new route
     path('api/products/', include('apps.commerce.product_features.products.urls')),
     path('api/subcategories/', include('apps.commerce.product_features.subcategories.urls')),
     path('api/newsletter/', include('apps.authentication.newsletter.urls')),
