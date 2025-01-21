@@ -9,41 +9,50 @@ const FeaturedProducts = () => {
     const [error, setError] = useState(null);
     const [productImageIndices, setProductImageIndices] = useState({});
 
-    // Default fallback image (ensure this path is correct)
-    const DEFAULT_IMAGE = '/assets/default-product.png';
+    const DEFAULT_IMAGE = '/api/placeholder/400/320';
+    const PRODUCTS_TO_SHOW = 12;
 
     useEffect(() => {
         const fetchFeaturedProducts = async () => {
             try {
                 setIsLoading(true);
-                
-                // Add request URL logging
-                console.log('Fetching from:', import.meta.env.VITE_API_URL || 'https://ecommerce-backend-nhrc.onrender.com/api');
+                console.log('Fetching featured products...');
                 
                 const response = await productAPI.getFeaturedProducts();
-                console.log('Full response:', response);
+                console.log('API Response:', response);
                 
                 const productsData = response.data.data?.results || response.data.results || response.data;
-                console.log('Extracted productsData:', productsData);
                 
                 if (Array.isArray(productsData)) {
-                    const processedProducts = productsData.map(product => ({
-                        ...product,
-                        image_url: product.image_url || "/api/placeholder/400/320"
-                    }));
-                    console.log('Processed products:', processedProducts);
+                    // Process and limit to 12 products
+                    const processedProducts = productsData
+                        .slice(0, PRODUCTS_TO_SHOW)
+                        .map(product => ({
+                            ...product,
+                            image_url: product.image_url || DEFAULT_IMAGE
+                        }));
+
+                    // If we have fewer than 12 products, fill with placeholders
+                    const productsToAdd = PRODUCTS_TO_SHOW - processedProducts.length;
+                    if (productsToAdd > 0) {
+                        const placeholders = Array(productsToAdd).fill({
+                            id: 'placeholder',
+                            name: 'Coming Soon',
+                            price: 0,
+                            image_url: DEFAULT_IMAGE,
+                            description: 'New product coming soon'
+                        });
+                        processedProducts.push(...placeholders);
+                    }
+
+                    console.log(`Showing ${processedProducts.length} products`);
                     setFeaturedProducts(processedProducts);
                 } else {
-                    throw new Error(`Invalid data structure: ${JSON.stringify(productsData)}`);
+                    throw new Error('Invalid data structure received from API');
                 }
             } catch (error) {
-                console.error('Detailed fetch error:', {
-                    message: error.message,
-                    response: error.response?.data,
-                    status: error.response?.status,
-                    stack: error.stack
-                });
-                setError('Failed to load featured products');
+                console.error('Error fetching products:', error);
+                setError('Unable to load featured products');
             } finally {
                 setIsLoading(false);
             }
@@ -52,7 +61,6 @@ const FeaturedProducts = () => {
         fetchFeaturedProducts();
     }, []);
 
-    // Loading state
     if (isLoading) {
         return (
             <div className="relative bg-gray-900 flex justify-center items-center h-96">
@@ -61,7 +69,6 @@ const FeaturedProducts = () => {
         );
     }
     
-    // Error state
     if (error) {
         return (
             <div className="relative bg-gray-900 flex justify-center items-center h-96">
@@ -85,20 +92,18 @@ const FeaturedProducts = () => {
                 </div>
     
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                    {featuredProducts.map((product) => (
+                    {featuredProducts.map((product, index) => (
                         <ProductCard
-                            key={product.id}
-                            product={{
-                                ...product,
-                                // Explicitly set image URL with fallback
-                                image_url: product.image_url || DEFAULT_IMAGE
-                            }}
+                            key={`${product.id}-${index}`}
+                            product={product}
                             currentImageIndex={productImageIndices[product.id] || 0}
                             onUpdateImageIndex={(newIndex) => {
-                                setProductImageIndices(prev => ({
-                                    ...prev,
-                                    [product.id]: newIndex
-                                }));
+                                if (product.id !== 'placeholder') {
+                                    setProductImageIndices(prev => ({
+                                        ...prev,
+                                        [product.id]: newIndex
+                                    }));
+                                }
                             }}
                         />
                     ))}
