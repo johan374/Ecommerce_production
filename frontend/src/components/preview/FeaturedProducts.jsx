@@ -20,6 +20,7 @@ const FeaturedProducts = () => {
     // Format: { productId: currentImageIndex }
     const [productImageIndices, setProductImageIndices] = useState({});
 
+    
     // Effect hook to fetch products when component mounts
     useEffect(() => {
         // Async function to fetch featured products

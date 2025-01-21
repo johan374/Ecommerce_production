@@ -2,67 +2,38 @@
 
 // Frontend assets path
 const FRONTEND_ASSETS_PATH = '/assets';
+
+// Default placeholder image
 const DEFAULT_IMAGE = '/api/placeholder/400/320';
 
 /**
- * Try to load images for a product using multiple patterns
+ * Get local images for a product from its folder
  * @param {Object} product - Product object
  * @returns {Array} Array of image objects
  */
 export const getLocalProductImages = (product) => {
   const images = [];
-  const category = product.category === 'ELEC' ? 'Electronics' : 'Food';
-  const subcategory = product.subcategory?.slug;
   
-  if (!category || !subcategory) {
-    return images;
-  }
-
-  // Build the base paths
-  const subcategoryPath = `${FRONTEND_ASSETS_PATH}/${category}/${subcategory}`;
-  const productFolderPath = `${subcategoryPath}/${product.id}`;
-
   try {
-    // Pattern 1: Try product-specific folder first (e.g., /Electronics/tv-home-theater/1/1.jpg)
-    const folderImage = {
-      image_url: `${productFolderPath}/1.jpg`,
-      alt_text: `${product.name} - Image 1`,
-      is_local: true
-    };
-    images.push(folderImage);
+    // Construct the base path to the product's folder
+    const basePath = `${FRONTEND_ASSETS_PATH}/${product.category === 'ELEC' ? 'Electronics' : 'Food'}/${product.subcategory?.slug}/${product.id}`;
 
-    // Try additional images in the product folder
+    // First, try to load the main image (assuming it's named "1.jpg" or similar)
+    images.push({
+      image_url: `${basePath}/1.jpg`,
+      alt_text: `${product.name} - Main Image`,
+      is_local: true
+    });
+
+    // Add up to 3 additional images if they exist
+    // Note: These will be attempted to be loaded, but will fallback gracefully if they don't exist
     for (let i = 2; i <= 4; i++) {
       images.push({
-        image_url: `${productFolderPath}/${i}.jpg`,
+        image_url: `${basePath}/${i}.jpg`,
         alt_text: `${product.name} - Image ${i}`,
         is_local: true
       });
     }
-
-    // Pattern 2: Try direct files in subcategory folder (e.g., /Electronics/tv-home-theater/product-1.jpg)
-    const directImage = {
-      image_url: `${subcategoryPath}/product-${product.id}.jpg`,
-      alt_text: `${product.name}`,
-      is_local: true
-    };
-    images.push(directImage);
-
-    // Try variations of the filename
-    const variations = [
-      `${subcategoryPath}/${product.id}.jpg`,
-      `${subcategoryPath}/img-${product.id}.jpg`,
-      `${subcategoryPath}/image-${product.id}.jpg`
-    ];
-
-    variations.forEach(path => {
-      images.push({
-        image_url: path,
-        alt_text: `${product.name}`,
-        is_local: true
-      });
-    });
-
   } catch (error) {
     console.warn(`Could not load local images for product ${product.id}:`, error);
   }
@@ -72,6 +43,8 @@ export const getLocalProductImages = (product) => {
 
 /**
  * Process backend image URL
+ * @param {string} imageUrl - Backend image URL
+ * @returns {string} Processed image URL
  */
 export const processBackendImageUrl = (imageUrl) => {
   if (!imageUrl) return DEFAULT_IMAGE;
@@ -81,6 +54,8 @@ export const processBackendImageUrl = (imageUrl) => {
 
 /**
  * Combine both backend and frontend images for a product
+ * @param {Object} product - Product object
+ * @returns {Array} Combined array of image objects
  */
 export const getCombinedProductImages = (product) => {
   let images = [];
@@ -94,7 +69,7 @@ export const getCombinedProductImages = (product) => {
     });
   }
 
-  // Add additional backend images
+  // Add additional backend images if they exist
   if (Array.isArray(product.additional_images)) {
     const additionalImages = product.additional_images.map(img => ({
       ...img,
@@ -104,23 +79,18 @@ export const getCombinedProductImages = (product) => {
     images = images.concat(additionalImages);
   }
 
-  // Add local images
+  // Add local images from the product's folder
   const localImages = getLocalProductImages(product);
   
-  // In production, filter out any images that fail to load
-  // In development, keep all for debugging
+  // Filter out any failed local images in production
+  // In development, we'll keep them to help with debugging
   if (process.env.NODE_ENV === 'production') {
-    // Add each local image but avoid duplicates
-    localImages.forEach(img => {
-      if (!images.some(existingImg => existingImg.image_url === img.image_url)) {
-        images.push(img);
-      }
-    });
+    images = images.concat(localImages.filter(img => img.image_url !== DEFAULT_IMAGE));
   } else {
     images = images.concat(localImages);
   }
 
-  // Fallback to default if no images
+  // If no images are available, use default
   if (images.length === 0) {
     return [{
       image_url: DEFAULT_IMAGE,
@@ -134,6 +104,8 @@ export const getCombinedProductImages = (product) => {
 
 /**
  * Handle image loading errors
+ * @param {Event} event - Error event object
+ * @param {Function} setFallbackImage - Function to set fallback image
  */
 export const handleImageError = (event, setFallbackImage) => {
   console.warn('Image failed to load:', event.target.src);

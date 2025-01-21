@@ -1,31 +1,26 @@
-// components/ProductCard.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Heart, ShoppingCart } from 'lucide-react';
 import ProductRating from './ProductRating';
 import ImageCarousel from './ImageCarousel';
 import ProductDetailModal from './ProductDetailModal';
 import { useCart } from '../../../context/CartContext';
+import { getCombinedProductImages } from '../imageConfig'; // Fixed import
 
 const ProductCard = ({ product, currentImageIndex, onUpdateImageIndex }) => {
     const { addItem } = useCart();
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [productImages, setProductImages] = useState([]);
+
+    useEffect(() => {
+        // Get combined images when product changes
+        const images = getCombinedProductImages(product);
+        setProductImages(images);
+    }, [product]);
 
     const handleAddToCart = (e) => {
-        e.stopPropagation(); // Prevent modal from opening when clicking the cart button
+        e.stopPropagation();
         addItem(product);
     };
-
-    const allImages = [
-        {
-            image_url: product.image_url,
-            alt_text: product.name,
-            crossOrigin: "anonymous"
-        },
-        ...(product.additional_images || []).map(img => ({
-            ...img,
-            crossOrigin: "anonymous"
-        }))
-    ];
 
     return (
         <>
@@ -35,18 +30,17 @@ const ProductCard = ({ product, currentImageIndex, onUpdateImageIndex }) => {
             >
                 <div className="relative">
                     <ImageCarousel 
-                        images={allImages}
+                        images={productImages}
                         currentIndex={currentImageIndex}
                         onUpdateIndex={(index) => {
                             onUpdateImageIndex(index);
-                            // Stop propagation to prevent modal from opening when clicking carousel buttons
                             event.stopPropagation();
                         }}
                     />
                     <button 
                         className="absolute top-4 right-4 p-2 rounded-full bg-white/80 hover:bg-white transition-colors"
                         onClick={(e) => {
-                            e.stopPropagation(); // Prevent modal from opening when clicking the heart button
+                            e.stopPropagation();
                             // Add wishlist functionality here
                         }}
                     >
@@ -79,7 +73,10 @@ const ProductCard = ({ product, currentImageIndex, onUpdateImageIndex }) => {
 
             {/* Product Detail Modal */}
             <ProductDetailModal
-                product={product}
+                product={{
+                    ...product,
+                    all_images: productImages
+                }}
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 currentImageIndex={currentImageIndex}
