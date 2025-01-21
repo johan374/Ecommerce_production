@@ -28,16 +28,30 @@ api.interceptors.response.use(
                 Object.keys(data).forEach(key => {
                     if (key === 'image_url' || key === 'additional_images') {
                         if (Array.isArray(data[key])) {
-                            data[key] = data[key].map(img => 
-                                img ? (img.startsWith('http') ? img : 
-                                `${MEDIA_URL}${img.startsWith('/') ? img : '/' + img}`)
-                                : "/api/placeholder/400/320"
-                            );
+                            data[key] = data[key].map(img => {
+                                if (!img) return "/api/placeholder/400/320";
+                                try {
+                                    const url = img.startsWith('http') ? img : 
+                                        `${MEDIA_URL}${img.startsWith('/') ? img : '/' + img}`;
+                                    // For debugging
+                                    console.log('Processed image URL:', url);
+                                    return url;
+                                } catch (e) {
+                                    console.error('Error processing image URL:', e);
+                                    return "/api/placeholder/400/320";
+                                }
+                            });
                         } else if (typeof data[key] === 'string' && data[key]) {
-                            data[key] = data[key].startsWith('http') ? data[key] :
-                                `${MEDIA_URL}${data[key].startsWith('/') ? data[key] : '/' + data[key]}`;
+                            try {
+                                data[key] = data[key].startsWith('http') ? data[key] :
+                                    `${MEDIA_URL}${data[key].startsWith('/') ? data[key] : '/' + data[key]}`;
+                                // For debugging
+                                console.log('Processed single image URL:', data[key]);
+                            } catch (e) {
+                                console.error('Error processing single image URL:', e);
+                                data[key] = "/api/placeholder/400/320";
+                            }
                         } else {
-                            // Provide a default placeholder if no image
                             data[key] = "/api/placeholder/400/320";
                         }
                     }
@@ -45,7 +59,7 @@ api.interceptors.response.use(
             }
             return data;
         };
-
+        
         response.data = processImageUrls(response.data);
         return response;
     },

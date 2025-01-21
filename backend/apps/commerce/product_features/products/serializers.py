@@ -84,12 +84,16 @@ class ProductSerializer(serializers.ModelSerializer):
                 request = self.context.get('request')
                 if request:
                     url = request.build_absolute_uri(obj.image.url)
-                    print(f"Built absolute URL: {url}")  # Debug log
+                    print(f"Image URL details: path={obj.image.path}, url={obj.image.url}, absolute={url}")
                     return url
-                return obj.image.url  # Return relative URL if no request
+                print("No request in context, using relative URL")
+                return obj.image.url
+            print("No image for product", obj.id)
             return None
         except Exception as e:
             print(f"Error getting image URL: {str(e)}")
+            import traceback
+            traceback.print_exc()
             return None
 
     # Method to get all additional product images
