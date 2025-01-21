@@ -16,36 +16,34 @@ const FeaturedProducts = () => {
         const fetchFeaturedProducts = async () => {
             try {
                 setIsLoading(true);
-                const response = await productAPI.getFeaturedProducts();
                 
-                // Add detailed logging
+                // Add request URL logging
+                console.log('Fetching from:', import.meta.env.VITE_API_URL || 'https://ecommerce-backend-nhrc.onrender.com/api');
+                
+                const response = await productAPI.getFeaturedProducts();
                 console.log('Full response:', response);
-                console.log('Response headers:', response.headers);
-                console.log('Response data structure:', JSON.stringify(response.data, null, 2));
                 
                 const productsData = response.data.data?.results || response.data.results || response.data;
-                
-                // Add validation logging
                 console.log('Extracted productsData:', productsData);
-                console.log('Is Array?', Array.isArray(productsData));
                 
                 if (Array.isArray(productsData)) {
                     const processedProducts = productsData.map(product => ({
                         ...product,
                         image_url: product.image_url || "/api/placeholder/400/320"
                     }));
+                    console.log('Processed products:', processedProducts);
                     setFeaturedProducts(processedProducts);
                 } else {
                     throw new Error(`Invalid data structure: ${JSON.stringify(productsData)}`);
                 }
             } catch (error) {
-                console.error('Detailed error:', {
+                console.error('Detailed fetch error:', {
                     message: error.message,
                     response: error.response?.data,
                     status: error.response?.status,
                     stack: error.stack
                 });
-                setError(`Failed to load featured products: ${error.message}`);
+                setError('Failed to load featured products');
             } finally {
                 setIsLoading(false);
             }

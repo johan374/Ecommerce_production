@@ -3,15 +3,27 @@ import api from './index';
 export const productAPI = {
     getFeaturedProducts: async () => {
         try {
+            console.log('Making featured products API call...');
             const response = await api.get('/products/featured/');
-            console.log('Raw Featured Products Response:', response);
-            console.log('Response Data:', response.data);
+            
+            // Add validation
+            if (!response.data) {
+                throw new Error('No data received from API');
+            }
+            
+            console.log('API Response:', {
+                status: response.status,
+                headers: response.headers,
+                data: response.data
+            });
+            
             return response;
         } catch (error) {
-            console.error('Detailed Featured Products Error:', {
+            console.error('Featured Products Error:', {
+                message: error.message,
                 status: error.response?.status,
                 data: error.response?.data,
-                message: error.message
+                stack: error.stack
             });
             throw error;
         }

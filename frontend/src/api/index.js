@@ -12,6 +12,12 @@ const api = axios.create({
     withCredentials: false
 });
 
+// Add the logging here, right after api creation
+console.log('API Configuration:', {
+    baseURL: api.defaults.baseURL,
+    mediaURL: MEDIA_URL
+});
+
 // Add an interceptor to handle image URLs
 api.interceptors.response.use(
     response => {
@@ -31,10 +37,9 @@ api.interceptors.response.use(
                             data[key] = data[key].startsWith('http') ? data[key] :
                                 `${MEDIA_URL}${data[key].startsWith('/') ? data[key] : '/' + data[key]}`;
                         } else {
+                            // Provide a default placeholder if no image
                             data[key] = "/api/placeholder/400/320";
                         }
-                    } else if (typeof data[key] === 'object') {
-                        processImageUrls(data[key]);
                     }
                 });
             }
