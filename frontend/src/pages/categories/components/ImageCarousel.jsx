@@ -1,143 +1,59 @@
-// src/utils/imageConfig.js
+// src/pages/categories/components/ImageCarousel.jsx
+import React from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-// Frontend assets path
-const FRONTEND_ASSETS_PATH = '/assets';
-const DEFAULT_IMAGE = '/api/placeholder/400/320';
-
-/**
- * Try to load images for a product using multiple patterns
- * @param {Object} product - Product object
- * @returns {Array} Array of image objects
- */
-export const getLocalProductImages = (product) => {
-  const images = [];
-  const category = product.category === 'ELEC' ? 'Electronics' : 'Food';
-  const subcategory = product.subcategory?.slug;
-  
-  if (!category || !subcategory) {
-    return images;
-  }
-
-  // Build the base paths
-  const subcategoryPath = `${FRONTEND_ASSETS_PATH}/${category}/${subcategory}`;
-  const productFolderPath = `${subcategoryPath}/${product.id}`;
-
-  try {
-    // Pattern 1: Try product-specific folder first (e.g., /Electronics/tv-home-theater/1/1.jpg)
-    const folderImage = {
-      image_url: `${productFolderPath}/1.jpg`,
-      alt_text: `${product.name} - Image 1`,
-      is_local: true
+const ImageCarousel = ({ images, currentIndex, onUpdateIndex, category = 'Electronics' }) => {
+    const getImageSrc = (image) => {
+        if (!image) return '/api/placeholder/400/320';
+        return image.image_url;
     };
-    images.push(folderImage);
 
-    // Try additional images in the product folder
-    for (let i = 2; i <= 4; i++) {
-      images.push({
-        image_url: `${productFolderPath}/${i}.jpg`,
-        alt_text: `${product.name} - Image ${i}`,
-        is_local: true
-      });
-    }
-
-    // Pattern 2: Try direct files in subcategory folder (e.g., /Electronics/tv-home-theater/product-1.jpg)
-    const directImage = {
-      image_url: `${subcategoryPath}/product-${product.id}.jpg`,
-      alt_text: `${product.name}`,
-      is_local: true
+    // Add handlers with stopPropagation
+    const handlePrevClick = (e) => {
+        e.stopPropagation();
+        onUpdateIndex(currentIndex === 0 ? images.length - 1 : currentIndex - 1);
     };
-    images.push(directImage);
 
-    // Try variations of the filename
-    const variations = [
-      `${subcategoryPath}/${product.id}.jpg`,
-      `${subcategoryPath}/img-${product.id}.jpg`,
-      `${subcategoryPath}/image-${product.id}.jpg`
-    ];
+    const handleNextClick = (e) => {
+        e.stopPropagation();
+        onUpdateIndex(currentIndex === images.length - 1 ? 0 : currentIndex + 1);
+    };
 
-    variations.forEach(path => {
-      images.push({
-        image_url: path,
-        alt_text: `${product.name}`,
-        is_local: true
-      });
-    });
+    return (
+        <div className="relative w-full h-64">
+            <img
+                src={getImageSrc(images[currentIndex])}
+                alt={images[currentIndex]?.alt_text || 'Product image'}
+                className="w-full h-full object-contain object-center"
+                onError={(e) => {
+                    console.error('Image failed to load:', e.target.src);
+                    e.target.src = "/api/placeholder/400/320";
+                }}
+            />
+            {images.length > 1 && (
+                <>
+                    <button 
+                        onClick={handlePrevClick}
+                        className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-1.5 transition-colors"
+                    >
+                        <ChevronLeft className="w-4 h-4" />
+                    </button>
 
-  } catch (error) {
-    console.warn(`Could not load local images for product ${product.id}:`, error);
-  }
+                    <button 
+                        onClick={handleNextClick}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-1.5 transition-colors"
+                    >
+                        <ChevronRight className="w-4 h-4" />
+                    </button>
 
-  return images;
+                    <div className="absolute bottom-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded-full">
+                        {currentIndex + 1} / {images.length}
+                    </div>
+                </>
+            )}
+        </div>
+    );
 };
 
-/**
- * Process backend image URL
- */
-export const processBackendImageUrl = (imageUrl) => {
-  if (!imageUrl) return DEFAULT_IMAGE;
-  if (imageUrl.startsWith('http')) return imageUrl;
-  return imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`;
-};
-
-/**
- * Combine both backend and frontend images for a product
- */
-export const getCombinedProductImages = (product) => {
-  let images = [];
-
-  // Add main backend image if it exists
-  if (product.image_url) {
-    images.push({
-      image_url: processBackendImageUrl(product.image_url),
-      alt_text: product.name,
-      is_local: false
-    });
-  }
-
-  // Add additional backend images
-  if (Array.isArray(product.additional_images)) {
-    const additionalImages = product.additional_images.map(img => ({
-      ...img,
-      image_url: processBackendImageUrl(img.image_url),
-      is_local: false
-    }));
-    images = images.concat(additionalImages);
-  }
-
-  // Add local images
-  const localImages = getLocalProductImages(product);
-  
-  // In production, filter out any images that fail to load
-  // In development, keep all for debugging
-  if (process.env.NODE_ENV === 'production') {
-    // Add each local image but avoid duplicates
-    localImages.forEach(img => {
-      if (!images.some(existingImg => existingImg.image_url === img.image_url)) {
-        images.push(img);
-      }
-    });
-  } else {
-    images = images.concat(localImages);
-  }
-
-  // Fallback to default if no images
-  if (images.length === 0) {
-    return [{
-      image_url: DEFAULT_IMAGE,
-      alt_text: 'Default product image',
-      is_local: true
-    }];
-  }
-
-  return images;
-};
-
-/**
- * Handle image loading errors
- */
-export const handleImageError = (event, setFallbackImage) => {
-  console.warn('Image failed to load:', event.target.src);
-  if (event.target.src !== DEFAULT_IMAGE) {
-    setFallbackImage(DEFAULT_IMAGE);
-  }
-};
+// Add this export default
+export default ImageCarousel;
