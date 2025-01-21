@@ -1,4 +1,4 @@
-// src/utils/imageConfig.js
+// src/pages/categories/imageConfig.js
 
 // Frontend assets path
 const FRONTEND_ASSETS_PATH = '/assets';
@@ -8,38 +8,43 @@ const DEFAULT_IMAGE = '/api/placeholder/400/320';
 
 /**
  * Get local images for a product from its folder
+/**
+ * Get local images for a product
  * @param {Object} product - Product object
  * @returns {Array} Array of image objects
  */
 export const getLocalProductImages = (product) => {
-  const images = [];
+    const images = [];
+    
+    try {
+      // Build the path to where images are stored in public folder
+      const basePath = `${FRONTEND_ASSETS_PATH}/${product.category === 'ELEC' ? 'Electronics' : 'Food'}/${product.subcategory?.slug}`;
   
-  try {
-    // Construct the base path to the product's folder
-    const basePath = `${FRONTEND_ASSETS_PATH}/${product.category === 'ELEC' ? 'Electronics' : 'Food'}/${product.subcategory?.slug}/${product.id}`;
-
-    // First, try to load the main image (assuming it's named "1.jpg" or similar)
-    images.push({
-      image_url: `${basePath}/1.jpg`,
-      alt_text: `${product.name} - Main Image`,
-      is_local: true
-    });
-
-    // Add up to 3 additional images if they exist
-    // Note: These will be attempted to be loaded, but will fallback gracefully if they don't exist
-    for (let i = 2; i <= 4; i++) {
-      images.push({
-        image_url: `${basePath}/${i}.jpg`,
-        alt_text: `${product.name} - Image ${i}`,
+      // Use image as named in your assets folder
+      const image = {
+        image_url: `${basePath}/${product.image_url}`,
+        alt_text: product.name,
         is_local: true
-      });
+      };
+      
+      images.push(image);
+  
+      // If there are additional images, add them too
+      if (product.additional_images) {
+        product.additional_images.forEach((additionalImage, index) => {
+          images.push({
+            image_url: `${basePath}/${additionalImage}`,
+            alt_text: `${product.name} - Image ${index + 2}`,
+            is_local: true
+          });
+        });
+      }
+    } catch (error) {
+      console.warn(`Could not load local images for product ${product.id}:`, error);
     }
-  } catch (error) {
-    console.warn(`Could not load local images for product ${product.id}:`, error);
-  }
-
-  return images;
-};
+  
+    return images;
+  };
 
 /**
  * Process backend image URL
