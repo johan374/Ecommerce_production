@@ -77,32 +77,19 @@ class ProductSerializer(serializers.ModelSerializer):
         ]
 
     # Method to get the main product image URL
+    # In serializers.py, modify get_image_url
     def get_image_url(self, obj):
         try:
-            print(f"Product ID: {obj.id}")
-            print(f"Image field: {obj.image}")
-            print(f"Image path: {obj.image.path if obj.image else 'No image'}")
-            print(f"Image URL: {obj.image.url if obj.image else 'No image URL'}")
-            
             if obj.image:
                 request = self.context.get('request')
-                print(f"Request context: {request}")
-                
                 if request:
                     url = request.build_absolute_uri(obj.image.url)
-                    print(f"Built absolute URL: {url}")
+                    print(f"Built absolute URL: {url}")  # Debug log
                     return url
-                
-                # Fallback URL
-                fallback_url = f'https://ecommerce-backend-nhrc.onrender.com{obj.image.url}'
-                print(f"Fallback URL: {fallback_url}")
-                return fallback_url
-            
+                return obj.image.url  # Return relative URL if no request
             return None
         except Exception as e:
-            print(f"Detailed image URL error: {e}")
-            import traceback
-            traceback.print_exc()
+            print(f"Error getting image URL: {str(e)}")
             return None
 
     # Method to get all additional product images

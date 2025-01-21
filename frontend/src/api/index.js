@@ -16,18 +16,22 @@ const api = axios.create({
 api.interceptors.response.use(
     response => {
         // Modify image URLs to be absolute
+        // In index.js
         const processImageUrls = (data) => {
             if (typeof data === 'object' && data !== null) {
                 Object.keys(data).forEach(key => {
-                    // Handle image_url and additional_images
                     if (key === 'image_url' || key === 'additional_images') {
                         if (Array.isArray(data[key])) {
                             data[key] = data[key].map(img => 
-                                img.startsWith('http') ? img : 
-                                `https://ecommerce-backend-nhrc.onrender.com${img.startsWith('/') ? img : '/' + img}`
+                                img ? (img.startsWith('http') ? img : 
+                                `${MEDIA_URL}${img.startsWith('/') ? img : '/' + img}`)
+                                : "/api/placeholder/400/320"
                             );
-                        } else if (typeof data[key] === 'string' && !data[key].startsWith('http')) {
-                            data[key] = `https://ecommerce-backend-nhrc.onrender.com${data[key].startsWith('/') ? data[key] : '/' + data[key]}`;
+                        } else if (typeof data[key] === 'string' && data[key]) {
+                            data[key] = data[key].startsWith('http') ? data[key] :
+                                `${MEDIA_URL}${data[key].startsWith('/') ? data[key] : '/' + data[key]}`;
+                        } else {
+                            data[key] = "/api/placeholder/400/320";
                         }
                     } else if (typeof data[key] === 'object') {
                         processImageUrls(data[key]);

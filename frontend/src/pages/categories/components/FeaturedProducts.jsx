@@ -17,7 +17,27 @@ const FeaturedProducts = () => {
             try {
                 setIsLoading(true);
                 const response = await productAPI.getFeaturedProducts();
+                
+                // Add detailed logging
+                console.log('Full response:', response);
+                console.log('Response headers:', response.headers);
+                console.log('Response data structure:', JSON.stringify(response.data, null, 2));
+                
                 const productsData = response.data.data?.results || response.data.results || response.data;
+                
+                // Add validation logging
+                console.log('Extracted productsData:', productsData);
+                console.log('Is Array?', Array.isArray(productsData));
+                
+                if (Array.isArray(productsData)) {
+                    const processedProducts = productsData.map(product => ({
+                        ...product,
+                        image_url: product.image_url || "/api/placeholder/400/320"
+                    }));
+                    setFeaturedProducts(processedProducts);
+                } else {
+                    throw new Error(`Invalid data structure: ${JSON.stringify(productsData)}`);
+                }
             } catch (error) {
                 console.error('Detailed error:', {
                     message: error.message,
@@ -26,6 +46,8 @@ const FeaturedProducts = () => {
                     stack: error.stack
                 });
                 setError(`Failed to load featured products: ${error.message}`);
+            } finally {
+                setIsLoading(false);
             }
         };
     
