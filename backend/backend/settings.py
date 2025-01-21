@@ -144,6 +144,10 @@ DATABASES = {
         default=os.getenv('DATABASE_URL'),
         conn_max_age=600,
         conn_health_checks=True,
+        ssl_require=True,  # Add SSL requirement
+        options={
+            'sslmode': 'require'  # Explicitly require SSL
+        }
     )
 }
 
