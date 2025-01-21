@@ -1,6 +1,6 @@
 import React from 'react';
 import { Github, Linkedin, Mail, Download, Code, Database, Layout, Globe,  ArrowLeft } from 'lucide-react';
-import yo from '../../assets/yo.jpg'
+import yo from '../../../public/assets/yo'
 import { Link } from 'react-router-dom';
 
 function About() {
