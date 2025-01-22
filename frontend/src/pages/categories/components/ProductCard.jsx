@@ -5,7 +5,6 @@ import { getCombinedProductImages } from '../imageConfig';
 import ProductRating from './ProductRating';
 import ImageCarousel from './ImageCarousel';
 import ProductDetailModal from './ProductDetailModal';
-import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const ProductCard = ({ 
   product, 
@@ -51,26 +50,17 @@ const ProductCard = ({
       await addItem(product);
       setShowAddedToCart(true);
       
-      // Hide success message after 2 seconds
       setTimeout(() => setShowAddedToCart(false), 2000);
     } catch (err) {
-      setError('Failed to add item to cart');
       console.error('Error adding to cart:', err);
+      // Show error message inline instead of using Alert component
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'text-red-500 text-sm mt-2';
+      errorDiv.textContent = 'Failed to add item to cart';
+      setTimeout(() => errorDiv.remove(), 3000);
     } finally {
       setIsAddingToCart(false);
     }
-  };
-
-  // Handle wishlist click (placeholder)
-  const handleWishlistClick = (e) => {
-    e.stopPropagation();
-    // Implement wishlist functionality here
-    console.log('Add to wishlist:', product.id);
-  };
-
-  // Handle image carousel update
-  const handleImageUpdate = (index) => {
-    onUpdateImageIndex?.(index);
   };
 
   // Show loading state
@@ -82,44 +72,42 @@ const ProductCard = ({
     );
   }
 
-  // Show error state
+  // Show error state inline
   if (error) {
     return (
-      <Alert variant="destructive" className="mb-4">
-        <AlertDescription>{error}</AlertDescription>
-      </Alert>
+      <div className="bg-white rounded-lg shadow-lg overflow-hidden p-6">
+        <p className="text-red-500 text-center">{error}</p>
+      </div>
     );
   }
 
-  // Format price with 2 decimal places
   const formattedPrice = typeof product.price === 'number' 
     ? `$${product.price.toFixed(2)}` 
     : '$0.00';
 
   return (
     <>
-      {/* Product Card */}
       <div 
         className="group bg-white rounded-lg shadow-lg overflow-hidden transition-all hover:shadow-xl cursor-pointer"
         onClick={() => setIsModalOpen(true)}
       >
-        {/* Image Section */}
         <div className="relative">
           <ImageCarousel 
             images={productImages}
             currentIndex={currentImageIndex}
-            onUpdateIndex={handleImageUpdate}
+            onUpdateIndex={(index) => onUpdateImageIndex?.(index)}
           />
           
-          {/* Wishlist Button */}
           <button 
             className="absolute top-4 right-4 p-2 rounded-full bg-white/80 hover:bg-white transition-colors"
-            onClick={handleWishlistClick}
+            onClick={(e) => {
+              e.stopPropagation();
+              console.log('Add to wishlist:', product.id);
+            }}
           >
             <Heart className="w-5 h-5 text-gray-600 hover:text-red-500 transition-colors" />
           </button>
 
-          {/* Added to Cart Notification */}
           {showAddedToCart && (
             <div className="absolute top-4 left-4 bg-green-500 text-white px-3 py-1 rounded-full text-sm">
               Added to cart!
@@ -127,28 +115,22 @@ const ProductCard = ({
           )}
         </div>
 
-        {/* Product Info Section */}
         <div className="p-6">
-          {/* Category */}
           <div className="text-sm text-blue-600 font-semibold mb-2">
             {product.category}
           </div>
 
-          {/* Product Name */}
           <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2 hover:line-clamp-none">
             {product.name}
           </h3>
 
-          {/* Rating */}
           <ProductRating rating={product.rating} />
           
-          {/* Price and Cart Section */}
           <div className="mt-4 flex items-center justify-between">
             <span className="text-2xl font-bold text-gray-900">
               {formattedPrice}
             </span>
             
-            {/* Add to Cart Button */}
             <button 
               onClick={handleAddToCart}
               disabled={isAddingToCart}
@@ -165,17 +147,18 @@ const ProductCard = ({
         </div>
       </div>
 
-      {/* Product Detail Modal */}
-      <ProductDetailModal
-        product={{
-          ...product,
-          all_images: productImages
-        }}
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        currentImageIndex={currentImageIndex}
-        onUpdateImageIndex={onUpdateImageIndex}
-      />
+      {isModalOpen && (
+        <ProductDetailModal
+          product={{
+            ...product,
+            all_images: productImages
+          }}
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          currentImageIndex={currentImageIndex}
+          onUpdateImageIndex={onUpdateImageIndex}
+        />
+      )}
     </>
   );
 };
