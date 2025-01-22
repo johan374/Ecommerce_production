@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Heart, ShoppingCart, Loader } from 'lucide-react';
 import { useCart } from '../../../context/CartContext';
-import { getProductImages } from './frontendImages';
+import { getCombinedProductImages } from '../imageConfig'; // Use existing imageConfig instead
 import ProductRating from './ProductRating';
 import ImageCarousel from './ImageCarousel';
 import ProductDetailModal from './ProductDetailModal';
@@ -20,15 +20,12 @@ const ProductCard = ({
 
   const { addItem } = useCart();
 
-  // Load frontend images
+  // Load images
   useEffect(() => {
     const loadImages = () => {
       try {
         setIsLoading(true);
-        const images = getProductImages(product).map((url, index) => ({
-          image_url: url,
-          alt_text: `${product.name} - View ${index + 1}`
-        }));
+        const images = getCombinedProductImages(product);
         setProductImages(images);
       } catch (err) {
         console.error('Error loading images:', err);
