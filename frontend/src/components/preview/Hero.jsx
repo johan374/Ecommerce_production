@@ -7,7 +7,7 @@ const images = {
     '/assets/Electronics/laptop.png',
     '/assets/Electronics/smartphone.png',
     '/assets/Electronics/tool.png',
-    '/assets/Electronics/tv/tv.png'
+    '/assets/Electronics/tv.png'
   ],
   food: [
     '/assets/Food/meals.png',
