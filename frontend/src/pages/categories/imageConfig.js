@@ -1,120 +1,161 @@
 // src/pages/categories/imageConfig.js
 
-// Frontend assets path
-const FRONTEND_ASSETS_PATH = '/assets';
-
-// Default placeholder image
-const DEFAULT_IMAGE = '/api/placeholder/400/320';
-
-/**
- * Get local images for a product from its folder
-/**
- * Get local images for a product
- * @param {Object} product - Product object
- * @returns {Array} Array of image objects
- */
-export const getLocalProductImages = (product) => {
+// Configuration constants
+const CONFIG = {
+    FRONTEND_ASSETS_PATH: '/assets',
+    DEFAULT_IMAGE: '/api/placeholder/400/320',
+    BACKEND_URL: import.meta.env.VITE_MEDIA_URL || 'https://ecommerce-backend-nhrc.onrender.com',
+    CATEGORY_PATHS: {
+      ELEC: 'Electronics',
+      FOOD: 'Food'
+    }
+  };
+  
+  /**
+   * Creates an image object with consistent structure
+   * @param {string} url - Image URL
+   * @param {string} altText - Alternative text for the image
+   * @param {boolean} isLocal - Whether the image is stored locally
+   * @returns {Object} Formatted image object
+   */
+  const createImageObject = (url, altText, isLocal = false) => ({
+    image_url: url,
+    alt_text: altText,
+    is_local: isLocal
+  });
+  
+  /**
+   * Processes a backend image URL to ensure proper formatting
+   * @param {string} imageUrl - Raw image URL from backend
+   * @returns {string} Processed image URL
+   */
+  export const processBackendImageUrl = (imageUrl) => {
+    if (!imageUrl) return CONFIG.DEFAULT_IMAGE;
+    if (imageUrl.startsWith('http')) return imageUrl;
+    
+    const cleanUrl = imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`;
+    return `${CONFIG.BACKEND_URL}${cleanUrl}`;
+  };
+  
+  /**
+   * Retrieves local product images from the assets directory
+   * @param {Object} product - Product object containing category and image information
+   * @returns {Array} Array of image objects
+   */
+  export const getLocalProductImages = (product) => {
     const images = [];
     
     try {
-      // Build the path to where images are stored in public folder
-      const basePath = `${FRONTEND_ASSETS_PATH}/${product.category === 'ELEC' ? 'Electronics' : 'Food'}/${product.subcategory?.slug}`;
+      // Determine category path
+      const categoryPath = CONFIG.CATEGORY_PATHS[product.category] || '';
+      if (!categoryPath) {
+        throw new Error(`Invalid category: ${product.category}`);
+      }
   
-      // Use image as named in your assets folder
-      const image = {
-        image_url: `${basePath}/${product.image_url}`,
-        alt_text: product.name,
-        is_local: true
-      };
-      
-      images.push(image);
+      // Build base path for images
+      const basePath = `${CONFIG.FRONTEND_ASSETS_PATH}/${categoryPath}/${product.subcategory?.slug || ''}`;
   
-      // If there are additional images, add them too
-      if (product.additional_images) {
+      // Add main product image
+      if (product.image_url) {
+        images.push(createImageObject(
+          `${basePath}/${product.image_url}`,
+          product.name,
+          true
+        ));
+      }
+  
+      // Add additional images if they exist
+      if (Array.isArray(product.additional_images)) {
         product.additional_images.forEach((additionalImage, index) => {
-          images.push({
-            image_url: `${basePath}/${additionalImage}`,
-            alt_text: `${product.name} - Image ${index + 2}`,
-            is_local: true
-          });
+          images.push(createImageObject(
+            `${basePath}/${additionalImage}`,
+            `${product.name} - Image ${index + 2}`,
+            true
+          ));
         });
       }
     } catch (error) {
-      console.warn(`Could not load local images for product ${product.id}:`, error);
+      console.warn(`Error loading local images for product ${product.id}:`, error);
     }
   
     return images;
   };
-
-/**
- * Process backend image URL
- * @param {string} imageUrl - Backend image URL
- * @returns {string} Processed image URL
- */
-export const processBackendImageUrl = (imageUrl) => {
-  if (!imageUrl) return DEFAULT_IMAGE;
-  if (imageUrl.startsWith('http')) return imageUrl;
-  return imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`;
-};
-
-/**
- * Combine both backend and frontend images for a product
- * @param {Object} product - Product object
- * @returns {Array} Combined array of image objects
- */
-export const getCombinedProductImages = (product) => {
-  let images = [];
-
-  // Add main backend image if it exists
-  if (product.image_url) {
-    images.push({
-      image_url: processBackendImageUrl(product.image_url),
-      alt_text: product.name,
-      is_local: false
-    });
-  }
-
-  // Add additional backend images if they exist
-  if (Array.isArray(product.additional_images)) {
-    const additionalImages = product.additional_images.map(img => ({
-      ...img,
-      image_url: processBackendImageUrl(img.image_url),
-      is_local: false
-    }));
-    images = images.concat(additionalImages);
-  }
-
-  // Add local images from the product's folder
-  const localImages = getLocalProductImages(product);
   
-  // Filter out any failed local images in production
-  // In development, we'll keep them to help with debugging
-  if (process.env.NODE_ENV === 'production') {
-    images = images.concat(localImages.filter(img => img.image_url !== DEFAULT_IMAGE));
-  } else {
-    images = images.concat(localImages);
-  }
-
-  // If no images are available, use default
-  if (images.length === 0) {
-    return [{
-      image_url: DEFAULT_IMAGE,
-      alt_text: 'Default product image',
-      is_local: true
-    }];
-  }
-
-  return images;
-};
-
-/**
- * Handle image loading errors
- * @param {Event} event - Error event object
- * @param {Function} setFallbackImage - Function to set fallback image
- */
-export const handleImageError = (event, setFallbackImage) => {
-  console.warn('Image failed to load:', event.target.src);
-  if (event.target.src !== DEFAULT_IMAGE) {
-    setFallbackImage(DEFAULT_IMAGE);
-  }
-};
+  /**
+   * Combines backend and frontend images for a product
+   * @param {Object} product - Product object
+   * @returns {Array} Combined array of image objects
+   */
+  export const getCombinedProductImages = (product) => {
+    if (!product) {
+      console.warn('No product provided to getCombinedProductImages');
+      return [createImageObject(CONFIG.DEFAULT_IMAGE, 'Default product image', true)];
+    }
+  
+    let images = [];
+  
+    // Process main product image from backend
+    if (product.image_url) {
+      images.push(createImageObject(
+        processBackendImageUrl(product.image_url),
+        product.name,
+        false
+      ));
+    }
+  
+    // Process additional backend images
+    if (Array.isArray(product.additional_images)) {
+      const additionalImages = product.additional_images.map((img, index) => 
+        createImageObject(
+          processBackendImageUrl(img.image_url || img),
+          `${product.name} - Image ${index + 2}`,
+          false
+        )
+      );
+      images = images.concat(additionalImages);
+    }
+  
+    // Add local images in development mode
+    if (process.env.NODE_ENV !== 'production') {
+      const localImages = getLocalProductImages(product);
+      images = images.concat(localImages);
+    }
+  
+    // Return default image if no images are available
+    if (images.length === 0) {
+      return [createImageObject(CONFIG.DEFAULT_IMAGE, 'Default product image', true)];
+    }
+  
+    // Filter out any invalid images
+    return images.filter(img => img.image_url && img.image_url !== 'undefined');
+  };
+  
+  /**
+   * Handles image loading errors with fallback
+   * @param {Event} event - Error event object
+   * @param {Function} setFallbackImage - Function to set fallback image
+   * @param {string} productName - Name of the product for logging
+   */
+  export const handleImageError = (event, setFallbackImage, productName = 'Unknown') => {
+    const failedUrl = event.target.src;
+    console.warn(`Image failed to load for ${productName}:`, failedUrl);
+    
+    if (failedUrl !== CONFIG.DEFAULT_IMAGE) {
+      setFallbackImage(CONFIG.DEFAULT_IMAGE);
+    }
+  };
+  
+  /**
+   * Validates whether an image URL is accessible
+   * @param {string} imageUrl - URL to validate
+   * @returns {Promise<boolean>} Whether the image is accessible
+   */
+  export const validateImageUrl = async (imageUrl) => {
+    try {
+      const response = await fetch(imageUrl, { method: 'HEAD' });
+      return response.ok;
+    } catch (error) {
+      console.warn(`Error validating image URL ${imageUrl}:`, error);
+      return false;
+    }
+  };
