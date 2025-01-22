@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Heart, ShoppingCart, Loader } from 'lucide-react';
 import { useCart } from '../../../context/CartContext';
-import { getMultipleProductImages } from '../../../config/imageConfig';
+import { getCombinedProductImages } from '../imageConfig';
 import ProductRating from './ProductRating';
 import ImageCarousel from './ImageCarousel';
 import ProductDetailModal from './ProductDetailModal';
@@ -11,6 +11,7 @@ const ProductCard = ({
   currentImageIndex = 0, 
   onUpdateImageIndex 
 }) => {
+  // State management
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [productImages, setProductImages] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -18,22 +19,17 @@ const ProductCard = ({
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [showAddedToCart, setShowAddedToCart] = useState(false);
 
+  // Cart context
   const { addItem } = useCart();
 
-  // Load frontend images
+  // Load product images
   useEffect(() => {
     const loadProductImages = async () => {
       try {
         setIsLoading(true);
         setError(null);
-
-        const images = getMultipleProductImages(product);
-        const formattedImages = images.map((imgSrc, index) => ({
-          image_url: imgSrc,
-          alt_text: `${product.name} - Image ${index + 1}`
-        }));
-
-        setProductImages(formattedImages);
+        const images = getCombinedProductImages(product);
+        setProductImages(images);
       } catch (err) {
         setError('Failed to load product images');
         console.error('Error loading product images:', err);
@@ -45,6 +41,7 @@ const ProductCard = ({
     loadProductImages();
   }, [product]);
 
+  // Handle adding item to cart
   const handleAddToCart = async (e) => {
     e.stopPropagation();
     
@@ -52,6 +49,7 @@ const ProductCard = ({
       setIsAddingToCart(true);
       await addItem(product);
       setShowAddedToCart(true);
+      
       setTimeout(() => setShowAddedToCart(false), 2000);
     } catch (err) {
       console.error('Error adding to cart:', err);
@@ -60,6 +58,7 @@ const ProductCard = ({
     }
   };
 
+  // Show loading state
   if (isLoading) {
     return (
       <div className="bg-white rounded-lg shadow-lg overflow-hidden p-6 flex items-center justify-center min-h-[400px]">
@@ -68,6 +67,7 @@ const ProductCard = ({
     );
   }
 
+  // Show error state
   if (error) {
     return (
       <div className="bg-white rounded-lg shadow-lg overflow-hidden p-6">
@@ -82,8 +82,10 @@ const ProductCard = ({
 
   return (
     <>
-      <div className="group bg-white rounded-lg shadow-lg overflow-hidden transition-all hover:shadow-xl cursor-pointer"
-           onClick={() => setIsModalOpen(true)}>
+      <div 
+        className="group bg-white rounded-lg shadow-lg overflow-hidden transition-all hover:shadow-xl cursor-pointer"
+        onClick={() => setIsModalOpen(true)}
+      >
         <div className="relative">
           <ImageCarousel 
             images={productImages}
@@ -91,11 +93,13 @@ const ProductCard = ({
             onUpdateIndex={(index) => onUpdateImageIndex?.(index)}
           />
           
-          <button className="absolute top-4 right-4 p-2 rounded-full bg-white/80 hover:bg-white transition-colors"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    console.log('Add to wishlist:', product.id);
-                  }}>
+          <button 
+            className="absolute top-4 right-4 p-2 rounded-full bg-white/80 hover:bg-white transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              console.log('Add to wishlist:', product.id);
+            }}
+          >
             <Heart className="w-5 h-5 text-gray-600 hover:text-red-500 transition-colors" />
           </button>
 
@@ -122,10 +126,12 @@ const ProductCard = ({
               {formattedPrice}
             </span>
             
-            <button onClick={handleAddToCart}
-                    disabled={isAddingToCart}
-                    className="flex items-center justify-center p-2 rounded-full bg-blue-600 hover:bg-blue-700 text-white transition-colors disabled:bg-gray-400"
-                    aria-label={isAddingToCart ? "Adding to cart..." : "Add to cart"}>
+            <button 
+              onClick={handleAddToCart}
+              disabled={isAddingToCart}
+              className="flex items-center justify-center p-2 rounded-full bg-blue-600 hover:bg-blue-700 text-white transition-colors disabled:bg-gray-400"
+              aria-label={isAddingToCart ? "Adding to cart..." : "Add to cart"}
+            >
               {isAddingToCart ? (
                 <Loader className="w-5 h-5 animate-spin" />
               ) : (
