@@ -4,8 +4,8 @@ import { Link } from 'react-router-dom';
 // Using absolute paths from public folder
 const images = {
   electronics: [
-    '/assets/Electronics/laptop/laptop.png',
-    '/assets/Electronics/phone/smartphone.png',
+    '/assets/Electronics/laptop.png',
+    '/assets/Electronics/smartphone.png',
     '/assets/Electronics/tool.png',
     '/assets/Electronics/tv/tv.png'
   ],
