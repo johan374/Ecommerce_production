@@ -3,30 +3,37 @@
 export const categoryImages = {
     ELEC: {
       'tv-home-theater': [
-        '/assets/electronics/tv/tv1.jpg',
-        '/assets/electronics/tv/tv2.jpg'
+        '/assets/electronics/tv-home-theater/tv/tv2.jpg',
+        '/assets/electronics/tv-home-theater/tv/tv3.jpg',
+        '/assets/electronics/tv-home-theater/tv/tv4.jpg'
       ],
       'computers-smartphones': [
         '/assets/electronics/computers-smarthphones/laptop/laptop.png',
-        '/assets/electronics/computers/computer2.jpg'
+        '/assets/electronics/computers-smarthphones/laptop/laptop2.jpg',
+        '/assets/electronics/computers-smarthphones/laptop/laptop3.jpg',
       ],
       'home-tools': [
-        '/assets/electronics/tools/tool1.jpg',
-        '/assets/electronics/tools/tool2.jpg'
+        '/assets/electronics/home-tools/drone/drone1.png',
+        '/assets/electronics/home-tools/drone/drone2.png'
       ]
     },
     FOOD: {
       'groceries': [
-        '/assets/food/groceries/grocery1.jpg',
-        '/assets/food/groceries/grocery2.jpg'
+        '/assets/food/groceries/bread/bread1.jpg',
+        '/assets/food/groceries/bread/bread2.jpg',
+        '/assets/food/groceries/bread/bread3.jpg',
+        '/assets/food/groceries/bread/bread4.jpg',
+        '/assets/food/groceries/bread/bread5.jpg',
+        '/assets/food/groceries/bread/bread6.jpg',
       ],
       'prepared-meals': [
-        '/assets/food/meals/meal1.jpg',
-        '/assets/food/meals/meal2.jpg'
+        '/assets/food/prepared-meals/goatMeal.jpg',
       ],
       'snacks-beverages': [
-        '/assets/food/snacks/snack1.jpg',
-        '/assets/food/snacks/snack2.jpg'
+        '/assets/food/snacks-beverages/milk/milk.jpg',
+        '/assets/food/snacks-beverages/milk/milk2.jpg',
+        '/assets/food/snacks-beverages/milk/milk3.jpg',
+        '/assets/food/snacks-beverages/milk/milk4.jpg',
       ]
     }
   };
