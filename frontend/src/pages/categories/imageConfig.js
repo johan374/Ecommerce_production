@@ -2,22 +2,50 @@
 
 // Configuration constants
 const CONFIG = {
+    // URLs and paths
     FRONTEND_ASSETS_PATH: '/assets',
+    BACKEND_URL: import.meta.env.VITE_API_URL || 'https://ecommerce-backend-nhrc.onrender.com/api',
+    MEDIA_URL: import.meta.env.VITE_MEDIA_URL || 'https://ecommerce-backend-nhrc.onrender.com',
     DEFAULT_IMAGE: '/api/placeholder/400/320',
+    
+    // Category mappings
     CATEGORY_PATHS: {
       ELEC: 'electronics',
       FOOD: 'food'
     },
+    
+    // Frontend images by category and subcategory
     PRODUCT_IMAGES: {
       ELEC: {
-        'tv-home-theater': Array.from({ length: 10 }, (_, i) => `/assets/electronics/tv/product-${i + 1}.jpg`),
-        'computers-smartphones': Array.from({ length: 10 }, (_, i) => `/assets/electronics/computers/product-${i + 1}.jpg`),
-        'home-tools': Array.from({ length: 10 }, (_, i) => `/assets/electronics/tools/product-${i + 1}.jpg`)
+        'tv-home-theater': [
+          '/assets/electronics/tv-home-theater/tv/tv2.jpg',
+          '/assets/electronics/tv-home-theater/tv/tv3.jpg',
+          '/assets/electronics/tv-home-theater/tv/tv4.jpg'
+        ],
+        'computers-smartphones': [
+          '/assets/electronics/computers-smartphones/laptop/laptop.png',
+          '/assets/electronics/computers-smartphones/laptop/laptop2.jpg',
+          '/assets/electronics/computers-smartphones/laptop/laptop3.jpg'
+        ],
+        'home-tools': [
+          '/assets/electronics/home-tools/drone/drone1.png',
+          '/assets/electronics/home-tools/drone/drone2.png'
+        ]
       },
       FOOD: {
-        'groceries': Array.from({ length: 10 }, (_, i) => `/assets/food/groceries/product-${i + 1}.jpg`),
-        'prepared-meals': Array.from({ length: 10 }, (_, i) => `/assets/food/meals/product-${i + 1}.jpg`),
-        'snacks-beverages': Array.from({ length: 10 }, (_, i) => `/assets/food/snacks/product-${i + 1}.jpg`)
+        'groceries': [
+          '/assets/food/groceries/bread/bread1.jpg',
+          '/assets/food/groceries/bread/bread2.jpg',
+          '/assets/food/groceries/bread/bread3.jpg'
+        ],
+        'prepared-meals': [
+          '/assets/food/prepared-meals/meal1.jpg',
+          '/assets/food/prepared-meals/meal2.jpg'
+        ],
+        'snacks-beverages': [
+          '/assets/food/snacks-beverages/snack1.jpg',
+          '/assets/food/snacks-beverages/snack2.jpg'
+        ]
       }
     }
   };
@@ -32,56 +60,98 @@ const CONFIG = {
   });
   
   /**
-   * Gets frontend images for a product based on its category and ID
+   * Processes a backend image URL
+   */
+  const processBackendUrl = (imageUrl) => {
+    if (!imageUrl) return CONFIG.DEFAULT_IMAGE;
+    if (imageUrl.startsWith('http')) return imageUrl;
+    return `${CONFIG.MEDIA_URL}${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`;
+  };
+  
+  /**
+   * Gets frontend images for a product
    */
   export const getFrontendProductImages = (product) => {
     if (!product) return [createImageObject(CONFIG.DEFAULT_IMAGE, 'Default product image')];
   
     try {
-      const category = CONFIG.CATEGORY_PATHS[product.category];
       const subcategory = product.subcategory?.slug;
+      const images = CONFIG.PRODUCT_IMAGES[product.category]?.[subcategory];
       
-      // Get predefined images for this category/subcategory
-      const availableImages = CONFIG.PRODUCT_IMAGES[product.category]?.[subcategory] || [];
-      
-      // Use modulo to cycle through available images based on product ID
-      const productIndex = parseInt(product.id) % availableImages.length;
-      const mainImage = availableImages[productIndex] || CONFIG.DEFAULT_IMAGE;
-      
-      // Create image objects array
-      const images = [
-        createImageObject(mainImage, product.name),
-        createImageObject(
-          availableImages[(productIndex + 1) % availableImages.length] || CONFIG.DEFAULT_IMAGE,
-          `${product.name} - Additional View 1`
-        ),
-        createImageObject(
-          availableImages[(productIndex + 2) % availableImages.length] || CONFIG.DEFAULT_IMAGE,
-          `${product.name} - Additional View 2`
-        )
-      ];
+      if (!images || images.length === 0) {
+        return [createImageObject(CONFIG.DEFAULT_IMAGE, product.name)];
+      }
   
-      return images;
+      // Get main image and additional images
+      const productIndex = parseInt(product.id) % images.length;
+      return [
+        createImageObject(images[productIndex], product.name),
+        createImageObject(images[(productIndex + 1) % images.length], `${product.name} - View 2`),
+        createImageObject(images[(productIndex + 2) % images.length], `${product.name} - View 3`)
+      ];
     } catch (error) {
-      console.warn(`Error getting frontend images for product ${product.id}:`, error);
-      return [createImageObject(CONFIG.DEFAULT_IMAGE, 'Default product image')];
+      console.warn(`Error getting frontend images for ${product.name}:`, error);
+      return [createImageObject(CONFIG.DEFAULT_IMAGE, product.name)];
     }
   };
   
   /**
-   * Gets combined product images (frontend or backend)
+   * Gets backend images for a product
+   */
+  export const getBackendProductImages = (product) => {
+    if (!product) return [createImageObject(CONFIG.DEFAULT_IMAGE, 'Default product image')];
+  
+    try {
+      const images = [];
+  
+      // Add main product image if it exists
+      if (product.image_url) {
+        images.push(createImageObject(
+          processBackendUrl(product.image_url),
+          product.name,
+          false
+        ));
+      }
+  
+      // Add additional images if they exist
+      if (Array.isArray(product.additional_images)) {
+        product.additional_images.forEach((img, index) => {
+          const imageUrl = typeof img === 'string' ? img : img.image_url;
+          if (imageUrl) {
+            images.push(createImageObject(
+              processBackendUrl(imageUrl),
+              `${product.name} - Image ${index + 2}`,
+              false
+            ));
+          }
+        });
+      }
+  
+      return images.length > 0 ? images : [createImageObject(CONFIG.DEFAULT_IMAGE, product.name)];
+    } catch (error) {
+      console.warn(`Error getting backend images for ${product.name}:`, error);
+      return [createImageObject(CONFIG.DEFAULT_IMAGE, product.name)];
+    }
+  };
+  
+  /**
+   * Gets combined product images (prioritizes backend images)
    */
   export const getCombinedProductImages = (product) => {
     if (!product) {
-      console.warn('No product provided to getCombinedProductImages');
       return [createImageObject(CONFIG.DEFAULT_IMAGE, 'Default product image')];
     }
   
-    // Get frontend images
-    const frontendImages = getFrontendProductImages(product);
+    // Get backend images first
+    const backendImages = getBackendProductImages(product);
+    
+    // If backend images exist (other than default), use them
+    if (backendImages.length > 1 || backendImages[0].image_url !== CONFIG.DEFAULT_IMAGE) {
+      return backendImages;
+    }
   
-    // Return frontend images by default
-    return frontendImages;
+    // Fallback to frontend images
+    return getFrontendProductImages(product);
   };
   
   /**
